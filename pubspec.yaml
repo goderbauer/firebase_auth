@@ -1,0 +1,11 @@
+name: firebase_auth
+description: A new flutter plugin project.
+
+flutter:
+  plugin:
+    androidPackage: com.yourcompany.firebase_auth
+    pluginClass: FirebaseAuthPlugin
+
+dependencies:
+  flutter:
+    sdk: flutter
