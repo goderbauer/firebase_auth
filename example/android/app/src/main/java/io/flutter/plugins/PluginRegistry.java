@@ -2,7 +2,7 @@ package io.flutter.plugins;
 
 import io.flutter.app.FlutterActivity;
 
-import com.yourcompany.firebase_auth.FirebaseAuthPlugin;
+import io.flutter.firebase_auth.FirebaseAuthPlugin;
 
 /**
  * Generated file. Do not edit.
