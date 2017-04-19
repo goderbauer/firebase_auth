@@ -4,16 +4,18 @@
 Pod::Spec.new do |s|
   s.name             = 'firebase_auth'
   s.version          = '0.0.1'
-  s.summary          = 'A new flutter plugin project.'
+  s.summary          = 'Firebase Auth plugin for Flutter.'
   s.description      = <<-DESC
-A new flutter plugin project.
+Firebase Auth plugin for Flutter.
                        DESC
-  s.homepage         = 'http://example.com'
+  s.homepage         = 'https://github.com/flutter/firebase_auth'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Your Company' => 'email@example.com' }
+  s.author           = { 'Google Inc.' => 'jackson@google.com' }
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.public_header_files = 'Classes/**/*.h'
+  s.ios.deployment_target = '6.0'
   s.dependency 'Flutter'
+  s.dependency 'Firebase/Auth'
+  s.dependency 'Firebase/Core'
 end
-
