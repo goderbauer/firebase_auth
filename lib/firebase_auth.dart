@@ -7,38 +7,46 @@ import 'dart:async';
 import 'package:meta/meta.dart';
 import 'package:flutter/services.dart';
 
+/// Represents user data returned from an identity provider.
 class UserInfo {
-  UserInfo(Map<String, dynamic> data)
-    : providerId = data['providerId'],
-      displayName = data['displayName'],
-      photoUrl = data['photoUrl'],
-      email = data['email'];
+  final Map<String, dynamic> _data;
+  UserInfo._(this._data);
 
-  final String providerId;
-  final String displayName;
-  final String photoUrl;
-  final String email;
+  /// The provider identifier.
+  String get providerId => _data['providerId'];
+
+  /// The provider’s user ID for the user.
+  String get uid => _data['uid'];
+
+  /// The name of the user.
+  String get displayName => _data['displayName'];
+
+  /// The URL of the user’s profile photo.
+  String get photoUrl => _data['photoUrl'];
+
+  /// The user’s email address.
+  String get email => _data['email'];
 
   @override
   String toString() {
-    return '$runtimeType($providerId $displayName $email)';
+    return '$runtimeType($_data)';
   }
 }
 
+/// Represents a user.
 class FirebaseUser {
-  FirebaseUser(Map<String, dynamic> data)
-    : isAnonymous = data['isAnonymous'],
-      isEmailVerified = data['isEmailVerified'],
-      providerData = (data['providerData'] as List<Map<String, dynamic>>)
-        .map((Map<String, dynamic> u) => new UserInfo(u)).toList();
-
-  final bool isAnonymous;
-  final bool isEmailVerified;
+  final Map<String, dynamic> _data;
   final List<UserInfo> providerData;
+  FirebaseUser._(this._data)
+    : providerData = (_data['providerData'] as List<Map<String, dynamic>>)
+        .map((Map<String, dynamic> info) => new UserInfo._(info)).toList();
+
+  bool get isAnonymous => _data['isAnonymous'];
+  bool get isEmailVerified => _data['isEmailVerified'];
 
   @override
   String toString() {
-    return '$runtimeType(anonymous:$isAnonymous emailVerified:$isEmailVerified $providerData)';
+    return '$runtimeType($_data)';
   }
 }
 
@@ -57,23 +65,23 @@ class FirebaseAuth {
   @visibleForTesting
   FirebaseAuth.private(this._channel);
 
-  ///  Asynchronously creates and becomes an anonymous user.
+  /// Asynchronously creates and becomes an anonymous user.
   ///
-  ///  If there is already an anonymous user signed in, that user will be
-  ///  returned instead. If there is any other existing user signed in, that
-  ///  user will be signed out.
+  /// If there is already an anonymous user signed in, that user will be
+  /// returned instead. If there is any other existing user signed in, that
+  /// user will be signed out.
   ///
-  ///  Will throw a PlatformException if
-  ///  FIRAuthErrorCodeOperationNotAllowed - Indicates that anonymous accounts are not enabled. Enable them in the Auth section of the Firebase console.
-  ///  See FIRAuthErrors for a list of error codes that are common to all API methods.
+  /// Will throw a PlatformException if
+  /// FIRAuthErrorCodeOperationNotAllowed - Indicates that anonymous accounts are not enabled. Enable them in the Auth section of the Firebase console.
+  /// See FIRAuthErrors for a list of error codes that are common to all API methods.
   Future<FirebaseUser> signInAnonymously() async {
     Map<String, dynamic> data = await _channel.invokeMethod('signInAnonymously');
-    _currentUser = new FirebaseUser(data);
+    _currentUser = new FirebaseUser._(data);
     return _currentUser;
   }
 
   FirebaseUser _currentUser;
 
-  /// Synchronously gets the cached current user, or null if there is none.
+  /// Synchronously gets the cached current user, or `null` if there is none.
   FirebaseUser get currentUser => _currentUser;
 }

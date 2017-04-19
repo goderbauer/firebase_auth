@@ -60,6 +60,7 @@
       [providerData addObject:@{
         @"providerId" : userInfo.providerID,
         @"displayName" : userInfo.displayName,
+        @"uid" : userInfo.uid,
         @"photoUrl" : userInfo.photoURL,
         @"email" : userInfo.email,
       }];
