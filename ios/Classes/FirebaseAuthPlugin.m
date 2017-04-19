@@ -9,7 +9,7 @@
 @implementation NSError (FlutterError)
 - (FlutterError *)flutterError {
   return [FlutterError
-      errorWithCode:[NSString stringWithFormat:@"Error %d", self.code]
+      errorWithCode:[NSString stringWithFormat:@"Error %d", (int)self.code]
             message:self.domain
             details:self.localizedDescription];
 }
@@ -32,15 +32,7 @@
       if ([@"signInAnonymously" isEqualToString:call.method]) {
         [[FIRAuth auth]
             signInAnonymouslyWithCompletion:^(FIRUser *user, NSError *error) {
-              if (error != nil) {
-                result(error.flutterError);
-              } else if (user == nil) {
-                result(nil);
-              } else {
-                result(@{
-                  @"isAnonymous" : [NSNumber numberWithBool:user.isAnonymous]
-                });
-              }
+              [self sendResult:result forUser:user error:error];
             }];
       } else {
         NSString *message = [NSString
@@ -52,6 +44,33 @@
     }];
   }
   return self;
+}
+
+- (void)sendResult:(FlutterResultReceiver)result
+           forUser:(FIRUser *)user
+             error:(NSError *)error {
+  if (error != nil) {
+    result(error.flutterError);
+  } else if (user == nil) {
+    result(nil);
+  } else {
+    NSMutableArray<NSDictionary<NSString *, NSString *> *> *providerData =
+        [NSMutableArray arrayWithCapacity:user.providerData.count];
+    for (id<FIRUserInfo> userInfo in user.providerData) {
+      [providerData addObject:@{
+        @"providerId" : userInfo.providerID,
+        @"displayName" : userInfo.displayName,
+        @"photoUrl" : userInfo.photoURL,
+        @"email" : userInfo.email,
+      }];
+    }
+    id userData = @{
+      @"isAnonymous" : [NSNumber numberWithBool:user.isAnonymous],
+      @"isEmailVerified" : [NSNumber numberWithBool:user.isEmailVerified],
+      @"providerData" : providerData,
+    };
+    result(userData);
+  }
 }
 
 @end

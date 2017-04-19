@@ -15,17 +15,15 @@ void main() {
   group('$FirebaseAuth', () {
     FirebaseAuth auth;
 
-    String invokedMethod;
-    dynamic arguments;
-
     setUp(() {
       MockPlatformChannel mockChannel = new MockPlatformChannel();
 
-      invokedMethod = null;
-      arguments = null;
-
       when(mockChannel.invokeMethod('signInAnonymously')).thenAnswer((Invocation invocation) {
-        return <String, dynamic>{ 'isAnonymous': true };
+        return <String, dynamic>{
+          'isAnonymous': true,
+          'isEmailVerified': false,
+          'providerData': <Map<String, String>>[],
+        };
       });
 
       auth = new FirebaseAuth.private(mockChannel);
@@ -34,8 +32,10 @@ void main() {
     test('signInAnonymously', () async {
       FirebaseUser user = await auth.signInAnonymously();
       expect(user, isNotNull);
-      expect(user.isAnonymous, isTrue);
       expect(user, auth.currentUser);
+      expect(user.isAnonymous, isTrue);
+      expect(user.isEmailVerified, isFalse);
+      expect(user.providerData, isEmpty);
     });
   });
 }
