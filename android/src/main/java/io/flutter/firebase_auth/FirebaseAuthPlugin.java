@@ -17,9 +17,9 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserInfo;
 
 import io.flutter.app.FlutterActivity;
-import io.flutter.plugin.common.FlutterMethodChannel;
-import io.flutter.plugin.common.FlutterMethodChannel.MethodCallHandler;
-import io.flutter.plugin.common.FlutterMethodChannel.Response;
+import io.flutter.plugin.common.MethodChannel;
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
+import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.MethodCall;
 
 import java.util.Map;
@@ -41,49 +41,49 @@ public class FirebaseAuthPlugin implements MethodCallHandler {
     this.activity = activity;
     FirebaseApp.initializeApp(activity);
     this.firebaseAuth = FirebaseAuth.getInstance();
-    new FlutterMethodChannel(activity.getFlutterView(), "firebase_auth").setMethodCallHandler(this);
+    new MethodChannel(activity.getFlutterView(), "firebase_auth").setMethodCallHandler(this);
   }
 
   @Override
-  public void onMethodCall(MethodCall call, Response response) {
+  public void onMethodCall(MethodCall call, Result result) {
     switch (call.method) {
       case "signInAnonymously":
-        handleSignInAnonymously(call, response);
+        handleSignInAnonymously(call, result);
         break;
       default:
-        response.notImplemented();
+        result.notImplemented();
         break;
     }
   }
 
-  private void handleSignInAnonymously(MethodCall call, final Response response) {
+  private void handleSignInAnonymously(MethodCall call, final Result result) {
     firebaseAuth
       .signInAnonymously()
-      .addOnCompleteListener(activity, new SignInCompleteListener(response));
+      .addOnCompleteListener(activity, new SignInCompleteListener(result));
   }
 
   private class SignInCompleteListener implements OnCompleteListener<AuthResult> {
-    private final Response response;
+    private final Result result;
 
-    SignInCompleteListener(Response response) {
-      this.response = response;
+    SignInCompleteListener(Result result) {
+      this.result = result;
     }
 
     @Override
     public void onComplete(@NonNull Task<AuthResult> task) {
       if (!task.isSuccessful()) {
         Exception e = task.getException();
-        response.error(ERROR_REASON_EXCEPTION, e.getMessage(), null);
+        result.error(ERROR_REASON_EXCEPTION, e.getMessage(), null);
       } else {
-        AuthResult result = task.getResult();
-        FirebaseUser user = result.getUser();
+        FirebaseUser user = task.getResult().getUser();
         if (user != null) {
           ImmutableList.Builder<ImmutableMap<String, String>> providerDataBuilder =
               ImmutableList.<ImmutableMap<String, String>>builder();
           for (UserInfo userInfo : user.getProviderData()) {
             ImmutableMap.Builder<String, String> userInfoBuilder =
                 ImmutableMap.<String, String>builder()
-                    .put("providerId", userInfo.getProviderId());
+                    .put("providerId", userInfo.getProviderId())
+                    .put("uid", userInfo.getUid());
             if (userInfo.getDisplayName() != null) {
               userInfoBuilder.put("displayName", userInfo.getDisplayName());
             }
@@ -101,9 +101,9 @@ public class FirebaseAuthPlugin implements MethodCallHandler {
                   .put("isEmailVerified", user.isEmailVerified())
                   .put("providerData", providerDataBuilder.build())
                   .build();
-          response.success(userMap);
+          result.success(userMap);
         } else {
-          response.success(null);
+          result.success(null);
         }
       }
     }
