@@ -7,6 +7,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
+final FirebaseAuth auth = FirebaseAuth.instance;
+final GoogleSignIn googleSignIn = new GoogleSignIn();
 
 void main() {
   runApp(new MyApp());
@@ -32,16 +36,9 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String _message = '';
-  final FirebaseAuth auth = FirebaseAuth.instance;
+  Future<String> _message = new Future<String>.value('');
 
-  void setMessage(String message) {
-    setState(() {
-      _message = message;
-    });
-  }
-
-  Future<Null> _testSignInAnonymously() async {
+  Future<String> _testSignInAnonymously() async {
     FirebaseUser user = await auth.signInAnonymously();
     assert(user != null);
     assert(user == auth.currentUser);
@@ -59,7 +56,19 @@ class _MyHomePageState extends State<MyHomePage> {
       assert(user.providerData[0].photoUrl == null);
       assert(user.providerData[0].email == null);
     }
-    setMessage('signInAnonymously succeeded: $user');
+    return 'signInAnonymously succeeded: $user';
+  }
+
+  Future<String> _testSignInWithGoogle() async {
+    GoogleSignInAccount googleUser = await googleSignIn.signIn();
+    GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+    FirebaseUser user = await auth.signInWithGoogle(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    assert(user.email != null);
+    assert(user.displayName != null);
+    return 'signInWithGoogle succeeded: $user';
   }
 
   @override
@@ -69,12 +78,33 @@ class _MyHomePageState extends State<MyHomePage> {
         title: new Text(widget.title),
       ),
       body: new Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           new MaterialButton(
             child: const Text('Test signInAnonymously'),
-            onPressed: _testSignInAnonymously,
+            onPressed: () {
+              setState(() {
+                _message = _testSignInAnonymously();
+              });
+            }
           ),
-          new Text(_message, style: const TextStyle(color: const Color.fromARGB(255, 0, 155, 0))),
+          new MaterialButton(
+            child: const Text('Test signInWithGoogle'),
+            onPressed: () {
+              setState(() {
+                _message = _testSignInWithGoogle();
+              });
+            }
+          ),
+          new FutureBuilder(
+            future: _message,
+            builder: (_, AsyncSnapshot<String> snapshot) {
+              return new Text(
+                snapshot.data ?? '',
+                style: const TextStyle(color: const Color.fromARGB(255, 0, 155, 0))
+              );
+            }
+          ),
         ],
       ),
     );

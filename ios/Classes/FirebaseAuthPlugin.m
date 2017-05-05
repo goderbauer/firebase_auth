@@ -15,6 +15,16 @@
 }
 @end
 
+NSDictionary *toDictionary(id<FIRUserInfo> userInfo) {
+  return @{
+    @"providerId" : userInfo.providerID,
+    @"displayName" : userInfo.displayName ?: [NSNull null],
+    @"uid" : userInfo.uid,
+    @"photoUrl" : userInfo.photoURL.absoluteString ?: [NSNull null],
+    @"email" : userInfo.email ?: [NSNull null],
+  };
+}
+
 @implementation FirebaseAuthPlugin {
 }
 
@@ -34,6 +44,17 @@
                                                               NSError *error) {
               [self sendResult:result forUser:user error:error];
             }];
+          } else if ([@"signInWithGoogle" isEqualToString:call.method]) {
+            NSString *idToken = call.arguments[@"idToken"];
+            NSString *accessToken = call.arguments[@"accessToken"];
+            FIRAuthCredential *credential =
+                [FIRGoogleAuthProvider credentialWithIDToken:idToken
+                                                 accessToken:accessToken];
+            [[FIRAuth auth]
+                signInWithCredential:credential
+                          completion:^(FIRUser *user, NSError *error) {
+                            [self sendResult:result forUser:user error:error];
+                          }];
           } else {
             result(FlutterMethodNotImplemented);
           }
@@ -53,19 +74,13 @@
     NSMutableArray<NSDictionary<NSString *, NSString *> *> *providerData =
         [NSMutableArray arrayWithCapacity:user.providerData.count];
     for (id<FIRUserInfo> userInfo in user.providerData) {
-      [providerData addObject:@{
-        @"providerId" : userInfo.providerID,
-        @"displayName" : userInfo.displayName,
-        @"uid" : userInfo.uid,
-        @"photoUrl" : userInfo.photoURL,
-        @"email" : userInfo.email,
-      }];
+      [providerData addObject:toDictionary(userInfo)];
     }
-    id userData = @{
-      @"isAnonymous" : [NSNumber numberWithBool:user.isAnonymous],
-      @"isEmailVerified" : [NSNumber numberWithBool:user.isEmailVerified],
-      @"providerData" : providerData,
-    };
+    NSMutableDictionary *userData = [toDictionary(user) mutableCopy];
+    userData[@"isAnonymous"] = [NSNumber numberWithBool:user.isAnonymous];
+    userData[@"isEmailVerified"] =
+        [NSNumber numberWithBool:user.isEmailVerified];
+    userData[@"providerData"] = providerData;
     result(userData);
   }
 }
