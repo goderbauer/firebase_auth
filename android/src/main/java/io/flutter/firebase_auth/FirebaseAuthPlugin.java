@@ -13,6 +13,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserInfo;
 
@@ -50,6 +52,9 @@ public class FirebaseAuthPlugin implements MethodCallHandler {
       case "signInAnonymously":
         handleSignInAnonymously(call, result);
         break;
+      case "signInWithGoogle":
+        handleSignInWithGoogle(call, result);
+        break;
       default:
         result.notImplemented();
         break;
@@ -62,11 +67,38 @@ public class FirebaseAuthPlugin implements MethodCallHandler {
       .addOnCompleteListener(activity, new SignInCompleteListener(result));
   }
 
+  private void handleSignInWithGoogle(MethodCall call, final Result result) {
+    @SuppressWarnings("unchecked")
+    Map<String, String> arguments = (Map<String, String>) call.arguments;
+    String idToken = arguments.get("idToken");
+    String accessToken = arguments.get("accessToken");
+    AuthCredential credential = GoogleAuthProvider.getCredential(idToken, accessToken);
+    firebaseAuth.signInWithCredential(credential)
+      .addOnCompleteListener(activity, new SignInCompleteListener(result));
+  }
+
   private class SignInCompleteListener implements OnCompleteListener<AuthResult> {
     private final Result result;
 
     SignInCompleteListener(Result result) {
       this.result = result;
+    }
+
+    private ImmutableMap.Builder<String, Object> userInfoToMap(UserInfo userInfo) {
+      ImmutableMap.Builder<String, Object> builder =
+          ImmutableMap.<String, Object>builder()
+              .put("providerId", userInfo.getProviderId())
+              .put("uid", userInfo.getUid());
+      if (userInfo.getDisplayName() != null) {
+        builder.put("displayName", userInfo.getDisplayName());
+      }
+      if (userInfo.getPhotoUrl() != null) {
+        builder.put("photoUrl", userInfo.getPhotoUrl().toString());
+      }
+      if (userInfo.getEmail() != null) {
+        builder.put("email", userInfo.getEmail());
+      }
+      return builder;
     }
 
     @Override
@@ -77,30 +109,16 @@ public class FirebaseAuthPlugin implements MethodCallHandler {
       } else {
         FirebaseUser user = task.getResult().getUser();
         if (user != null) {
-          ImmutableList.Builder<ImmutableMap<String, String>> providerDataBuilder =
-              ImmutableList.<ImmutableMap<String, String>>builder();
+          ImmutableList.Builder<ImmutableMap<String, Object>> providerDataBuilder =
+              ImmutableList.<ImmutableMap<String, Object>>builder();
           for (UserInfo userInfo : user.getProviderData()) {
-            ImmutableMap.Builder<String, String> userInfoBuilder =
-                ImmutableMap.<String, String>builder()
-                    .put("providerId", userInfo.getProviderId())
-                    .put("uid", userInfo.getUid());
-            if (userInfo.getDisplayName() != null) {
-              userInfoBuilder.put("displayName", userInfo.getDisplayName());
-            }
-            if (userInfo.getPhotoUrl() != null) {
-              userInfoBuilder.put("photoUrl", userInfo.getPhotoUrl().toString());
-            }
-            if (userInfo.getEmail() != null) {
-              userInfoBuilder.put("email", userInfo.getEmail());
-            }
-            providerDataBuilder.add(userInfoBuilder.build());
+            providerDataBuilder.add(userInfoToMap(userInfo).build());
           }
-          ImmutableMap<String, Object> userMap =
-              ImmutableMap.<String, Object>builder()
-                  .put("isAnonymous", user.isAnonymous())
-                  .put("isEmailVerified", user.isEmailVerified())
-                  .put("providerData", providerDataBuilder.build())
-                  .build();
+          ImmutableMap<String, Object> userMap = userInfoToMap(user)
+              .put("isAnonymous", user.isAnonymous())
+              .put("isEmailVerified", user.isEmailVerified())
+              .put("providerData", providerDataBuilder.build())
+              .build();
           result.success(userMap);
         } else {
           result.success(null);
