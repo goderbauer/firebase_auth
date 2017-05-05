@@ -68,6 +68,7 @@ public class FirebaseAuthPlugin implements MethodCallHandler {
   }
 
   private void handleSignInWithGoogle(MethodCall call, final Result result) {
+    @SuppressWarnings("unchecked")
     Map<String, String> arguments = (Map<String, String>) call.arguments;
     String idToken = arguments.get("idToken");
     String accessToken = arguments.get("accessToken");
@@ -83,7 +84,7 @@ public class FirebaseAuthPlugin implements MethodCallHandler {
       this.result = result;
     }
 
-    private ImmutableMap.Builder<String, Object> userInfoBuilder(UserInfo userInfo) {
+    private ImmutableMap.Builder<String, Object> userInfoToMap(UserInfo userInfo) {
       ImmutableMap.Builder<String, Object> builder =
           ImmutableMap.<String, Object>builder()
               .put("providerId", userInfo.getProviderId())
@@ -111,9 +112,9 @@ public class FirebaseAuthPlugin implements MethodCallHandler {
           ImmutableList.Builder<ImmutableMap<String, Object>> providerDataBuilder =
               ImmutableList.<ImmutableMap<String, Object>>builder();
           for (UserInfo userInfo : user.getProviderData()) {
-            providerDataBuilder.add(userInfoBuilder(userInfo).build());
+            providerDataBuilder.add(userInfoToMap(userInfo).build());
           }
-          ImmutableMap<String, Object> userMap = userInfoBuilder(user)
+          ImmutableMap<String, Object> userMap = userInfoToMap(user)
               .put("isAnonymous", user.isAnonymous())
               .put("isEmailVerified", user.isEmailVerified())
               .put("providerData", providerDataBuilder.build())
