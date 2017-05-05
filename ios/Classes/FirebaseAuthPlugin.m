@@ -27,26 +27,22 @@
     FlutterMethodChannel *channel =
         [FlutterMethodChannel methodChannelWithName:@"firebase_auth"
                                     binaryMessenger:controller];
-    [channel setMethodCallHandler:^(FlutterMethodCall *call,
-                                    FlutterResultReceiver result) {
-      if ([@"signInAnonymously" isEqualToString:call.method]) {
-        [[FIRAuth auth]
-            signInAnonymouslyWithCompletion:^(FIRUser *user, NSError *error) {
+    [channel
+        setMethodCallHandler:^(FlutterMethodCall *call, FlutterResult result) {
+          if ([@"signInAnonymously" isEqualToString:call.method]) {
+            [[FIRAuth auth] signInAnonymouslyWithCompletion:^(FIRUser *user,
+                                                              NSError *error) {
               [self sendResult:result forUser:user error:error];
             }];
-      } else {
-        NSString *message = [NSString
-            stringWithFormat:@"Method not implemented: %@", call.method];
-        result([FlutterError errorWithCode:message
-                                   message:message
-                                   details:message]);
-      }
-    }];
+          } else {
+            result(FlutterMethodNotImplemented);
+          }
+        }];
   }
   return self;
 }
 
-- (void)sendResult:(FlutterResultReceiver)result
+- (void)sendResult:(FlutterResult)result
            forUser:(FIRUser *)user
              error:(NSError *)error {
   if (error != nil) {

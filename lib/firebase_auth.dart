@@ -51,13 +51,13 @@ class FirebaseUser {
 }
 
 class FirebaseAuth {
-  final PlatformMethodChannel _channel;
+  final MethodChannel _channel;
 
   /// Provides an instance of this class corresponding to the default app.
   ///
   /// TODO(jackson): Support for non-default apps.
   static FirebaseAuth instance = new FirebaseAuth.private(
-    const PlatformMethodChannel('firebase_auth'),
+    const MethodChannel('firebase_auth'),
   );
 
   /// We don't want people to extend this class, but implementing its interface,
