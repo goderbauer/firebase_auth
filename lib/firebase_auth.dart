@@ -63,7 +63,7 @@ class FirebaseAuth {
   ///
   /// TODO(jackson): Support for non-default apps.
   static FirebaseAuth instance = new FirebaseAuth.private(
-    const MethodChannel('firebase_auth'),
+    const MethodChannel('plugins.flutter.io/firebase_auth'),
   );
 
   /// We don't want people to extend this class, but implementing its interface,

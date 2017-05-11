@@ -30,7 +30,7 @@ NSDictionary *toDictionary(id<FIRUserInfo> userInfo) {
 
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar> *)registrar {
   FlutterMethodChannel *channel =
-  [FlutterMethodChannel methodChannelWithName:@"firebase_auth"
+  [FlutterMethodChannel methodChannelWithName:@"plugins.flutter.io/firebase_auth"
                               binaryMessenger:[registrar messenger]];
   FirebaseAuthPlugin *instance = [[FirebaseAuthPlugin alloc] init];
   [registrar addMethodCallDelegate:instance channel:channel];

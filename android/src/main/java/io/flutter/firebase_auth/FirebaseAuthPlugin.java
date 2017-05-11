@@ -38,7 +38,8 @@ public class FirebaseAuthPlugin implements MethodCallHandler {
 
 
   public static void registerWith(PluginRegistry.Registrar registrar) {
-    final MethodChannel channel = new MethodChannel(registrar.messenger(), "firebase_auth");
+    final MethodChannel channel =
+        new MethodChannel(registrar.messenger(), "plugins.flutter.io/firebase_auth");
     channel.setMethodCallHandler(new FirebaseAuthPlugin(registrar.activity()));
   }
 
