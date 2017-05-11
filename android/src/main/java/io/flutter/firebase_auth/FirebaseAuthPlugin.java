@@ -4,6 +4,7 @@
 
 package io.flutter.firebase_auth;
 
+import android.app.Activity;
 import android.support.annotation.NonNull;
 
 import com.google.android.gms.tasks.Task;
@@ -18,11 +19,11 @@ import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserInfo;
 
-import io.flutter.app.FlutterActivity;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.MethodCall;
+import io.flutter.plugin.common.PluginRegistry;
 
 import java.util.Map;
 
@@ -30,20 +31,21 @@ import java.util.Map;
  * Flutter plugin for Firebase Auth.
  */
 public class FirebaseAuthPlugin implements MethodCallHandler {
-  private final FlutterActivity activity;
+  private final Activity activity;
   private final FirebaseAuth firebaseAuth;
 
   private static final String ERROR_REASON_EXCEPTION = "exception";
 
-  public static FirebaseAuthPlugin register(FlutterActivity activity) {
-    return new FirebaseAuthPlugin(activity);
+
+  public static void registerWith(PluginRegistry.Registrar registrar) {
+    final MethodChannel channel = new MethodChannel(registrar.messenger(), "firebase_auth");
+    channel.setMethodCallHandler(new FirebaseAuthPlugin(registrar.activity()));
   }
 
-  private FirebaseAuthPlugin(FlutterActivity activity) {
+  private FirebaseAuthPlugin(Activity activity) {
     this.activity = activity;
     FirebaseApp.initializeApp(activity);
     this.firebaseAuth = FirebaseAuth.getInstance();
-    new MethodChannel(activity.getFlutterView(), "firebase_auth").setMethodCallHandler(this);
   }
 
   @Override

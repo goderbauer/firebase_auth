@@ -28,39 +28,47 @@ NSDictionary *toDictionary(id<FIRUserInfo> userInfo) {
 @implementation FirebaseAuthPlugin {
 }
 
-- (instancetype)initWithController:(FlutterViewController *)controller {
++ (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar> *)registrar {
+  FlutterMethodChannel *channel =
+  [FlutterMethodChannel methodChannelWithName:@"firebase_auth"
+                              binaryMessenger:[registrar messenger]];
+  FirebaseAuthPlugin *instance = [[FirebaseAuthPlugin alloc] init];
+  [registrar addMethodCallDelegate:instance channel:channel];
+}
+
+
+
+- (instancetype)init {
   self = [super init];
   if (self) {
     if (![FIRApp defaultApp]) {
       [FIRApp configure];
     }
-    FlutterMethodChannel *channel =
-        [FlutterMethodChannel methodChannelWithName:@"firebase_auth"
-                                    binaryMessenger:controller];
-    [channel
-        setMethodCallHandler:^(FlutterMethodCall *call, FlutterResult result) {
-          if ([@"signInAnonymously" isEqualToString:call.method]) {
-            [[FIRAuth auth] signInAnonymouslyWithCompletion:^(FIRUser *user,
-                                                              NSError *error) {
-              [self sendResult:result forUser:user error:error];
-            }];
-          } else if ([@"signInWithGoogle" isEqualToString:call.method]) {
-            NSString *idToken = call.arguments[@"idToken"];
-            NSString *accessToken = call.arguments[@"accessToken"];
-            FIRAuthCredential *credential =
-                [FIRGoogleAuthProvider credentialWithIDToken:idToken
-                                                 accessToken:accessToken];
-            [[FIRAuth auth]
-                signInWithCredential:credential
-                          completion:^(FIRUser *user, NSError *error) {
-                            [self sendResult:result forUser:user error:error];
-                          }];
-          } else {
-            result(FlutterMethodNotImplemented);
-          }
-        }];
   }
   return self;
+}
+
+
+- (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
+  if ([@"signInAnonymously" isEqualToString:call.method]) {
+    [[FIRAuth auth] signInAnonymouslyWithCompletion:^(FIRUser *user,
+                                                      NSError *error) {
+      [self sendResult:result forUser:user error:error];
+    }];
+  } else if ([@"signInWithGoogle" isEqualToString:call.method]) {
+    NSString *idToken = call.arguments[@"idToken"];
+    NSString *accessToken = call.arguments[@"accessToken"];
+    FIRAuthCredential *credential =
+        [FIRGoogleAuthProvider credentialWithIDToken:idToken
+                                         accessToken:accessToken];
+    [[FIRAuth auth]
+        signInWithCredential:credential
+                  completion:^(FIRUser *user, NSError *error) {
+                    [self sendResult:result forUser:user error:error];
+                  }];
+  } else {
+    result(FlutterMethodNotImplemented);
+  }
 }
 
 - (void)sendResult:(FlutterResult)result
